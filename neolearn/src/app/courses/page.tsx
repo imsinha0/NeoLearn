@@ -68,6 +68,7 @@ export default function CoursesPage() {
   const handleDeleteCourse = async (id: string) => {
     try {
       await deleteDoc(doc(db, "courses", id));
+      console.log("Course deleted successfully: " + id);
       setCourses(courses.filter(course => course.id !== id));
     } catch (error) {
       console.error("Error deleting course:", error);

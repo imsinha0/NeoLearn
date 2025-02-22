@@ -16,10 +16,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      if (currentUser) {
+        router.push("/courses"); // Redirect to courses if user is logged in
+      }
       setUser(currentUser);
     });
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
