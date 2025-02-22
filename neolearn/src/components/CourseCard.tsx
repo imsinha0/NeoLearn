@@ -20,8 +20,8 @@ export function CourseCard({ course, onDelete, onEdit }: CourseCardProps) {
 
   return (
     <div className="bg-gray-800 p-4 rounded-lg shadow-lg">
-      <h3 className="text-xl font-bold mb-2">{course.name}</h3>
-      <p className="text-gray-300 mb-2">{course.subject}</p>
+      <h3 className="text-xl font-bold mb-2">{course.title}</h3>
+
       <div className="flex space-x-2">
         <button
           onClick={() => onEdit(course)}

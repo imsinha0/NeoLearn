@@ -1,4 +1,9 @@
-import React from 'react';
+"use client"
+
+import { useState } from 'react';
+import { LearningChat } from '../../components/LearningChat';
+import { ProblemChat } from '../../components/ProblemChat';
+
 
 const words = [
   "React", "JavaScript", "TypeScript", "Firebase", "Next.js", 
@@ -6,28 +11,44 @@ const words = [
 ];
 
 export default function ChatPage() {
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+
   return (
     <div className="flex min-h-screen bg-gray-900 text-white p-6">
       <div className="w-1/4 p-4 border-r border-gray-700">
-        <h2 className="text-2xl font-bold mb-4">Words</h2>
+        <h2 className="text-2xl font-bold mb-4">Topics</h2>
         <ul className="space-y-2">
           {words.map((word, index) => (
-            <li key={index} className="bg-gray-800 p-2 rounded shadow">{word}</li>
+            <li 
+              key={index} 
+              onClick={() => setSelectedTopic(word)}
+              className={`bg-gray-800 p-2 rounded shadow cursor-pointer hover:bg-gray-700 ${
+                selectedTopic === word ? 'ring-2 ring-blue-600' : ''
+              }`}
+            >
+              {word}
+            </li>
           ))}
         </ul>
       </div>
       <div className="w-1/2 p-4">
         <h2 className="text-2xl font-bold mb-4">Learn</h2>
-        <div className="bg-gray-800 p-4 rounded shadow h-96 overflow-auto">
-          {/* Chat interface for learning */}
-          <p className="text-gray-300">Chat interface for learning goes here...</p>
+        <div className="bg-gray-800 p-4 rounded shadow h-[calc(100vh-8rem)]">
+          {selectedTopic ? (
+            <LearningChat topic={selectedTopic} />
+          ) : (
+            <p className="text-gray-300">Select a topic to start learning...</p>
+          )}
         </div>
       </div>
       <div className="w-1/4 p-4">
         <h2 className="text-2xl font-bold mb-4">Problems</h2>
-        <div className="bg-gray-800 p-4 rounded shadow h-96 overflow-auto">
-          {/* Chat interface for problems */}
-          <p className="text-gray-300">Chat interface for problems goes here...</p>
+        <div className="bg-gray-800 p-4 rounded shadow h-[calc(100vh-8rem)]">
+          {selectedTopic ? (
+            <ProblemChat topic={selectedTopic} />
+          ) : (
+            <p className="text-gray-300">Select a topic to get practice problems...</p>
+          )}
         </div>
       </div>
     </div>

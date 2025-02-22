@@ -11,11 +11,12 @@ interface CourseDialogProps {
 export function CourseDialog({ isOpen, course, onClose, onSave }: CourseDialogProps) {
   const [formData, setFormData] = useState<Course>({
     id: course?.id || crypto.randomUUID(),
-    name: course?.name || '',
+    title: course?.title || '',       // ✅ Fix: Changed "name" to "title"
     subject: course?.subject || '',
     syllabus: course?.syllabus || '',
     textbook: course?.textbook || '',
     description: course?.description || '',
+    userId: course?.userId || '',
   });
 
   if (!isOpen) return null;
@@ -33,9 +34,9 @@ export function CourseDialog({ isOpen, course, onClose, onSave }: CourseDialogPr
           <div className="space-y-4">
             <input
               type="text"
-              placeholder="Course Name"
-              value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              placeholder="Course Title"
+              value={formData.title}   // ✅ Fixed "name" → "title"
+              onChange={(e) => setFormData({...formData, title: e.target.value})}
               className="w-full px-3 py-2 bg-gray-700 rounded"
             />
             <input
