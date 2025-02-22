@@ -1,8 +1,8 @@
-export type Course = {
+export interface Course {
   id: string;
-  name: string;
-  subject: string;
-  syllabus: string;
-  textbook: string;
+  title: string;
   description: string;
-};
+  userId: string;
+  createdAt?: Date;
+  // ... any other fields you need
+}

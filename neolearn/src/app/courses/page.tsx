@@ -1,27 +1,77 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { auth, db } from '@/firebase';
 import { CourseCard } from '../../components/CourseCard';
 import { CourseDialog } from '../../components/CourseDialog';
 import type { Course } from '../../types/Course';
+import { collection, addDoc, deleteDoc, updateDoc, doc, getDocs, query, where } from 'firebase/firestore';
 
 export default function CoursesPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
   const [courses, setCourses] = useState<Course[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | undefined>();
+  
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      
+      const q = query(collection(db, "courses"), where("userId", "==", user.uid));
+      const querySnapshot = await getDocs(q);
+      const userCourses = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Course));
+      setCourses(userCourses);
+      setLoading(false);
+    });
 
-  const handleSaveCourse = (course: Course) => {
-    if (selectedCourse) {
-      setCourses(courses.map(c => c.id === course.id ? course : c));
-    } else {
-      setCourses([...courses, course]);
+    return () => unsubscribe();
+  }, [router]);
+
+  if (loading) {
+    return <div className="min-h-screen bg-gray-900 text-white p-8 flex items-center justify-center">
+      Loading...
+    </div>;
+  }
+
+  const handleSaveCourse = async (course: Course) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      if (selectedCourse) {
+        const courseRef = doc(db, "courses", course.id);
+        await updateDoc(courseRef, { ...course, userId: user.uid });
+        setCourses(courses.map(c => c.id === course.id ? course : c));
+      } else {
+        const docRef = await addDoc(collection(db, "courses"), {
+          ...course,
+          userId: user.uid,
+          createdAt: new Date()
+        });
+        setCourses([...courses, { ...course, id: docRef.id }]);
+      }
+      setIsDialogOpen(false);
+      setSelectedCourse(undefined);
+    } catch (error) {
+      console.error("Error saving course:", error);
     }
-    setIsDialogOpen(false);
-    setSelectedCourse(undefined);
   };
 
-  const handleDeleteCourse = (id: string) => {
-    setCourses(courses.filter(course => course.id !== id));
+  const handleDeleteCourse = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, "courses", id));
+      setCourses(courses.filter(course => course.id !== id));
+    } catch (error) {
+      console.error("Error deleting course:", error);
+    }
   };
 
   const handleEditCourse = (course: Course) => {

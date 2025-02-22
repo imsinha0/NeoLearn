@@ -30,8 +30,8 @@ export default function LoginPage() {
       } else {
         await signUp(email, password);
       }
-    } catch (error: any) {
-      setError(error.message); // Set error message
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'An error occurred');
     }
   };
 
