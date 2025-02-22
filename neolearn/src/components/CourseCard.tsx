@@ -1,3 +1,4 @@
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { Course } from '../types/Course';
 
@@ -9,6 +10,7 @@ interface CourseCardProps {
 
 export function CourseCard({ course, onDelete, onEdit }: CourseCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const router = useRouter();
 
   const handleDelete = () => {
     if (showDeleteConfirm) {
@@ -18,19 +20,23 @@ export function CourseCard({ course, onDelete, onEdit }: CourseCardProps) {
     }
   };
 
+  const handleClick = () => {
+    router.push(`/chat?courseId=${course.id}`);
+  };
+
   return (
-    <div className="bg-gray-800 p-4 rounded-lg shadow-lg">
+    <div className="bg-gray-800 p-4 rounded-lg shadow-lg cursor-pointer" onClick={handleClick}>
       <h3 className="text-xl font-bold mb-2">{course.name}</h3>
       <p className="text-gray-300 mb-2">{course.subject}</p>
       <div className="flex space-x-2">
         <button
-          onClick={() => onEdit(course)}
+          onClick={(e) => { e.stopPropagation(); onEdit(course); }}
           className="px-3 py-1 bg-blue-600 rounded hover:bg-blue-700"
         >
           Edit
         </button>
         <button
-          onClick={handleDelete}
+          onClick={(e) => { e.stopPropagation(); handleDelete(); }}
           className="px-3 py-1 bg-red-600 rounded hover:bg-red-700"
         >
           {showDeleteConfirm ? 'Confirm Delete?' : 'Delete'}
