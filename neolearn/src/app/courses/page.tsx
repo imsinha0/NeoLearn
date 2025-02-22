@@ -83,8 +83,16 @@ export default function CoursesPage() {
 
   const handleDeleteCourse = async (id: string) => {
     try {
-      await deleteDoc(doc(db, "courses", id));
-      console.log("Course deleted successfully: " + id);
+      console.log("Deleting course with id: " + id);
+      const courseRef = query(collection(db, "courses"), where("id", "==", id));
+      const courseSnapshot = await getDocs(courseRef);
+      if (!courseSnapshot.empty) {
+        await deleteDoc(doc(db, "courses", courseSnapshot.docs[0].id));
+        console.log("Course deleted successfully: " + courseSnapshot.docs[0].id);
+      } else {
+        console.log("No course found with id: id");
+      }
+
       setCourses(courses.filter(course => course.id !== id));
     } catch (error) {
       console.error("Error deleting course:", error);
