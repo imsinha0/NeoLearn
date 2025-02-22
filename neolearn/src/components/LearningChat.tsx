@@ -15,6 +15,12 @@ export function LearningChat({ topic, courseId }: { topic: string; courseId: str
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const quickActions = [
+    { label: "Teach me", prompt: `Teach me about ${topic}` },
+    { label: "Give me an example", prompt: `Give me an example about ${topic}` },
+    { label: "Explain again", prompt: `Explain ${topic} again in a different way` }
+  ];
+
   useEffect(() => {
     const loadChatHistory = async () => {
       const user = auth.currentUser;
@@ -124,16 +130,71 @@ export function LearningChat({ topic, courseId }: { topic: string; courseId: str
     }
   };
 
+  const handleQuickAction = async (prompt: string) => {
+    const userMessage: Message = { 
+      role: 'user', 
+      content: prompt,
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    await saveMessage(userMessage);
+    setIsLoading(true);
+
+    try {
+      const context = messages
+        .map(m => `${m.role}: ${m.content}`)
+        .join('\n');
+
+      const response = await fetch('/api/learn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: prompt,
+          topic,
+          mode: 'learn',
+          context
+        }),
+      });
+
+      const data = await response.json();
+      const assistantMessage: Message = { 
+        role: 'assistant', 
+        content: data.response,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, assistantMessage]);
+      await saveMessage(assistantMessage);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
-      <div className="flex justify-between mb-4">
+      <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-bold">{topic}</h3>
-        <button
-          onClick={clearHistory}
-          className="px-3 py-1 bg-red-600 rounded hover:bg-red-700"
-        >
-          Clear History
-        </button>
+        <div className="flex space-x-2">
+          {quickActions.map(({ label, prompt }) => (
+            <button
+              key={label}
+              onClick={() => handleQuickAction(prompt)}
+              disabled={isLoading}
+              className="px-3 py-1 bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              {label}
+            </button>
+          ))}
+          <button
+            onClick={clearHistory}
+            className="px-3 py-1 bg-red-600 rounded hover:bg-red-700"
+          >
+            Clear History
+          </button>
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto space-y-4">
         {messages.map((message, index) => (
