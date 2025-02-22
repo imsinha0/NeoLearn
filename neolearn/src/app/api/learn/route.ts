@@ -3,12 +3,12 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { message, topic, mode } = await request.json();
+    const { message, topic, mode, context } = await request.json();
 
-    // Create prompt based on mode
+    // Create prompt based on mode and include context
     const prompt = mode === 'learn' 
-      ? `You are a programming tutor. Explain ${topic} concepts related to: ${message}`
-      : `You are a programming tutor. Create a practice problem about ${topic} related to: ${message}. Include a problem description, example inputs/outputs, and hints if needed.`;
+      ? `You are a programming tutor. Previous conversation:\n${context}\n\nExplain ${topic} concepts related to: ${message}`
+      : `You are a programming tutor. Previous conversation:\n${context}\n\nCreate a practice problem about ${topic} related to: ${message}. Include a problem description, example inputs/outputs, and hints if needed.`;
 
     // Generate response using Firebase's Vertex AI model
     const result = await model.generateContent({
