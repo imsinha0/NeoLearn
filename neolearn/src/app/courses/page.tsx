@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from 'react';
-import { CourseCard } from '@/components/CourseCard';
-import { CourseDialog } from '@/components/CourseDialog';
-import { Course } from '@/types/Course';
+import { CourseCard } from '../../components/CourseCard';
+import { CourseDialog } from '../../components/CourseDialog';
+import type { Course } from '../../types/Course';
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);

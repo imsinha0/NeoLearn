@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Course } from '@/types/Course';
+import type { Course } from '../types/Course';
 
 interface CourseCardProps {
   course: Course;
