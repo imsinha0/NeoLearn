@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth, db } from '@/firebase';
+import { auth, db, model } from '@/firebase';
 import { CourseCard } from '../../components/CourseCard';
 import { CourseDialog } from '../../components/CourseDialog';
 import type { Course } from '../../types/Course';
@@ -51,12 +51,28 @@ export default function CoursesPage() {
         await updateDoc(courseRef, { ...course, userId: user.uid });
         setCourses(courses.map(c => c.id === course.id ? course : c));
       } else {
+
+        let prompt = "I will give you information about a course."
+        prompt = prompt + "Please give me 8 topics about the course separated by a comma."
+        prompt = prompt + "The title of the course is: " + course.title
+        prompt = prompt + "The subject of the course is: " + course.subject
+        prompt = prompt + "The description of the course is: " + course.description
+        prompt = prompt + "The textbook of the course are: " + course.textbook
+        prompt = prompt + "The syllabus of the course is: " + course.syllabus
+        
+        const result = await model.generateContent(prompt);
+        const response = result.response;
+        const text = response.text();
+
+        const topics = text.split(',').map(topic => topic.trim().replace(/^["']|["']$/g, '')).filter(topic => topic);
+
         const docRef = await addDoc(collection(db, "courses"), {
           ...course,
           userId: user.uid,
-          createdAt: new Date()
+          createdAt: new Date(),
+          topics: topics // Add the topics list to the courses document
         });
-        setCourses([...courses, { ...course, id: docRef.id }]);
+        setCourses([...courses, { ...course, id: docRef.id, topics }]); // Include topics in the course object
       }
       setIsDialogOpen(false);
       setSelectedCourse(undefined);
@@ -80,6 +96,10 @@ export default function CoursesPage() {
     setIsDialogOpen(true);
   };
 
+  const handleCourseClick = (course: Course) => {
+    router.push(`/chat?courseId=${course.id}`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <div className="max-w-6xl mx-auto">
@@ -100,6 +120,7 @@ export default function CoursesPage() {
               course={course}
               onDelete={handleDeleteCourse}
               onEdit={handleEditCourse}
+              onClick={handleCourseClick}
             />
           ))}
         </div>

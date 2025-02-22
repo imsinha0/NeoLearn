@@ -7,4 +7,5 @@ export interface Course {
   textbook: string;    // ✅ Added "textbook"
   userId: string;
   createdAt?: Date;
+  topics?: string[];
 }
