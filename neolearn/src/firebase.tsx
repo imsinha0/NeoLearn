@@ -1,7 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getVertexAI, getGenerativeModel } from "firebase/vertexai";
 
@@ -22,11 +21,21 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const vertexAI = getVertexAI(app);
 
+// Initialize analytics only in client-side environment
+let analytics = null;
+if (typeof window !== 'undefined') {
+  // Dynamic import for analytics
+  import('firebase/analytics').then(({ getAnalytics }) => {
+    analytics = getAnalytics(app);
+  }).catch((error) => {
+    console.error('Analytics initialization error:', error);
+  });
+}
+
 const model = getGenerativeModel(vertexAI, { model: "gemini-2.0-flash" });
 
-export { auth, app, analytics, db, model}; 
+export { auth, app, analytics, db, model }; 
