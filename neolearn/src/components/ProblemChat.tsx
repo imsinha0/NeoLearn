@@ -1,39 +1,113 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { auth, db } from '@/firebase';
+import { collection, addDoc, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  timestamp: Date;
 }
 
-export function ProblemChat({ topic }: { topic: string }) {
+export function ProblemChat({ topic, courseId }: { topic: string; courseId: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const loadChatHistory = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+  
+      const q = query(
+        collection(db, "courses"),
+        where("id", "==", courseId)
+      );
+  
+      const querySnapshot = await getDocs(q);
+      const courseDoc = querySnapshot.docs[0];
+      const courseData = courseDoc.data();
+      const chatHistory = courseData.problemChat || [];
+      setMessages(chatHistory);
+    };
+
+    loadChatHistory();
+  }, [courseId]);
+
+  const clearHistory = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const courseRef = collection(db, "courses");
+    const q = query(courseRef, where("id", "==", courseId));
+
+    const querySnapshot = await getDocs(q);
+    const courseDoc = querySnapshot.docs[0];
+    const courseData = courseDoc.data();
+    courseData.problemChat = [];
+    await deleteDoc(courseDoc.ref);
+    await addDoc(courseRef, courseData);
+    setMessages([]);
+  };
+
+  const saveMessage = async (message: Message) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const courseRef = collection(db, "courses");
+    const q = query(courseRef, where("id", "==", courseId));
+
+    const querySnapshot = await getDocs(q);
+    const courseDoc = querySnapshot.docs[0];
+    const courseData = courseDoc.data();
+    const chatHistory = courseData.problemChat || [];
+    chatHistory.push(message);
+
+    await deleteDoc(courseDoc.ref);
+    await addDoc(courseRef, { ...courseData, problemChat: chatHistory });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const userMessage = { role: 'user', content: input };
+    const userMessage: Message = { 
+      role: 'user', 
+      content: input,
+      timestamp: new Date()
+    };
+    
     setMessages(prev => [...prev, userMessage]);
+    await saveMessage(userMessage);
     setInput('');
     setIsLoading(true);
 
     try {
+      const context = messages
+        .map(m => `${m.role}: ${m.content}`)
+        .join('\n');
+
       const response = await fetch('/api/learn', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: input,
-          topic: topic,
-          mode: 'problem'
+          topic,
+          mode: 'problem',
+          context
         }),
       });
 
       const data = await response.json();
-      setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+      const assistantMessage: Message = { 
+        role: 'assistant', 
+        content: data.response,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, assistantMessage]);
+      await saveMessage(assistantMessage);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -43,6 +117,15 @@ export function ProblemChat({ topic }: { topic: string }) {
 
   return (
     <div className="flex flex-col h-full">
+      <div className="flex justify-between mb-4">
+        <h3 className="text-xl font-bold">Practice: {topic}</h3>
+        <button
+          onClick={clearHistory}
+          className="px-3 py-1 bg-red-600 rounded hover:bg-red-700"
+        >
+          Clear History
+        </button>
+      </div>
       <div className="flex-1 overflow-y-auto space-y-4">
         {messages.map((message, index) => (
           <div

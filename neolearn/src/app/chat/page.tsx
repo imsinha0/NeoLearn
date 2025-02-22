@@ -196,7 +196,7 @@ export default function ChatPage() {
         <h2 className="text-2xl font-bold mb-4">Learn</h2>
         <div className="bg-gray-800 p-4 rounded shadow h-[calc(100vh-10rem)]">
           {selectedTopic ? (
-            <LearningChat topic={selectedTopic} />
+            <LearningChat topic={selectedTopic!} courseId={courseId!} />
           ) : (
             <p className="text-gray-300">Select a topic to start learning...</p>
           )}
@@ -206,7 +206,7 @@ export default function ChatPage() {
         <h2 className="text-2xl font-bold mb-4">Problems</h2>
         <div className="bg-gray-800 p-4 rounded shadow h-[calc(100vh-10rem)]">
           {selectedTopic ? (
-            <ProblemChat topic={selectedTopic} />
+            <ProblemChat topic={selectedTopic!} courseId={courseId!} />
           ) : (
             <p className="text-gray-300">Select a topic to get practice problems...</p>
           )}

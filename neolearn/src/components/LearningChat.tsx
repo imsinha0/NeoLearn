@@ -10,63 +10,71 @@ interface Message {
   timestamp: Date;
 }
 
-export function LearningChat({ topic }: { topic: string }) {
+export function LearningChat({ topic, courseId }: { topic: string; courseId: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    const loadChatHistory = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+  
+      const q = query(
+        collection(db, "courses"),
+        where("id", "==", courseId),
+      );
+  
+      const querySnapshot = await getDocs(q);
+      const courseDoc = querySnapshot.docs[0];
+      const courseData = courseDoc.data();
+      const chatHistory = courseData.learningChat || [];
+      setMessages(chatHistory);
+    };
+
     loadChatHistory();
-  }, [topic]);
-
-  const loadChatHistory = async () => {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    const q = query(
-      collection(db, "chatHistory"),
-      where("userId", "==", user.uid),
-      where("topic", "==", topic),
-      where("mode", "==", "learn"),
-      orderBy("timestamp", "asc")
-    );
-
-    const querySnapshot = await getDocs(q);
-    const history = querySnapshot.docs.map(doc => doc.data() as Message);
-    setMessages(history);
-  };
+  }, [courseId]);
 
   const clearHistory = async () => {
     const user = auth.currentUser;
     if (!user) return;
 
+    const courseRef = collection(db, "courses");
     const q = query(
-      collection(db, "chatHistory"),
-      where("userId", "==", user.uid),
-      where("topic", "==", topic),
-      where("mode", "==", "learn")
+      courseRef,
+      where("id", "==", courseId)
     );
 
     const querySnapshot = await getDocs(q);
-    querySnapshot.docs.forEach(async (doc) => {
-      await deleteDoc(doc.ref);
-    });
-
+    const courseDoc = querySnapshot.docs[0];
+    const courseData = courseDoc.data();
+    courseData.learningChat = [];
+    await deleteDoc(courseDoc.ref);
+    await addDoc(courseRef, courseData);
     setMessages([]);
   };
 
-  const saveMessage = async (message: Message, mode: 'learn' | 'problem') => {
+  const saveMessage = async (message: Message) => {
     const user = auth.currentUser;
     if (!user) return;
 
-    await addDoc(collection(db, "chatHistory"), {
-      ...message,
-      userId: user.uid,
-      topic,
-      mode,
-      timestamp: new Date()
-    });
-  };
+    const courseRef = collection(db, "courses");
+    const q = query(
+      courseRef,
+      where("id", "==", courseId)
+    );
+
+    const querySnapshot = await getDocs(q);
+    const courseDoc = querySnapshot.docs[0];
+    const courseData = courseDoc.data();
+    const chatHistory = courseData.learningChat || [];
+    chatHistory.push(message);
+
+    await deleteDoc(courseDoc.ref);
+    await addDoc(courseRef, { ...courseData, learningChat: chatHistory });
+
+    }
+  ;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +87,7 @@ export function LearningChat({ topic }: { topic: string }) {
     };
     
     setMessages(prev => [...prev, userMessage]);
-    await saveMessage(userMessage, 'learn');
+    await saveMessage(userMessage);
     setInput('');
     setIsLoading(true);
 
@@ -108,7 +116,7 @@ export function LearningChat({ topic }: { topic: string }) {
       };
       
       setMessages(prev => [...prev, assistantMessage]);
-      await saveMessage(assistantMessage, 'learn');
+      await saveMessage(assistantMessage);
     } catch (error) {
       console.error('Error:', error);
     } finally {
