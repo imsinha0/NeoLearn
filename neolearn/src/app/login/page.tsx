@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { auth } from "@/firebase";
 import { signIn, signUp } from "@/auth/auth"; // Ensure these functions are exported from auth.tsx
 import { signOut } from "@/auth/auth"; // Import signOut function
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -11,6 +12,7 @@ export default function LoginPage() {
   const [user, setUser] = useState(auth.currentUser);
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
@@ -24,7 +26,7 @@ export default function LoginPage() {
     setError(""); // Reset error message
     try {
       if (isLogin) {
-        await signIn(email, password);
+        await signIn(email, password, router);
       } else {
         await signUp(email, password);
       }
@@ -34,7 +36,7 @@ export default function LoginPage() {
   };
 
   const handleLogout = async () => {
-    await signOut(auth);
+    await signOut();
     setUser(null);
   };
 

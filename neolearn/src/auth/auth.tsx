@@ -1,31 +1,26 @@
 import { auth } from "@/firebase"; // Ensure auth is imported
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut as firebaseSignOut } from "firebase/auth"; // Import necessary functions
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context";
+import { FirebaseError } from "firebase/app";
 
 async function signUp(email: string, password: string) {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        console.log("User signed up:", user);
-        // Redirect to a protected page or update UI
-    } catch (error: any) { // Specify error type
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        console.error("Sign-up error:", errorCode, errorMessage);
-        // Display an error message to the user
+        return user;
+    } catch (error: FirebaseError) {
+        throw error;
     }
 }
 
-async function signIn(email: string, password: string) { // Specify parameter types
+async function signIn(email: string, password: string, router: AppRouterInstance) {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        console.log("User signed in:", user);
-        // Redirect to a protected page or update UI
-    } catch (error: any) { // Specify error type
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        console.error("Sign-in error:", errorCode, errorMessage);
-        // Display an error message to the user
+        router.push("/courses");
+        return user;
+    } catch (error: FirebaseError) {
+        throw error;
     }
 }
 
@@ -41,16 +36,8 @@ onAuthStateChanged(auth, (user: any) => { // Specify user type
     }
 });
 
-function signOut() {
-    firebaseSignOut(auth).then(() => { // Use the renamed signOut function
-        // Sign-out successful.
-        console.log("User signed out");
-        // Redirect to the login page or update UI accordingly
-    }).catch((error: any) => { // Specify error type
-        // An error happened.
-        console.error("Sign-out error:", error);
-    });
+async function signOut() {
+    await firebaseSignOut(auth);
 }
-
 
 export { signUp, signIn, signOut }; // Export the functions
