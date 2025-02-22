@@ -18,6 +18,11 @@ export async function POST(request: Request) {
       }]
     });
 
+    // Add null check for candidates
+    if (!result.response?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Invalid response from AI model');
+    }
+
     const response = result.response.candidates[0].content.parts[0].text;
 
     return NextResponse.json({ response });

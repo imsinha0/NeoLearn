@@ -1,8 +1,12 @@
 "use client"
 
-import { useState } from 'react';
 import { LearningChat } from '../../components/LearningChat';
 import { ProblemChat } from '../../components/ProblemChat';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { auth, db } from '@/firebase'; // Import your Firestore instance
+import { collection, addDoc, deleteDoc, updateDoc, doc, getDocs, query, where } from 'firebase/firestore';
+import { useSearchParams } from 'next/navigation';
 
 
 const words = [
