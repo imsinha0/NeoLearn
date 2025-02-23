@@ -8,6 +8,9 @@ import { auth, db } from '@/firebase'; // Import your Firestore instance
 import { collection, addDoc, deleteDoc, updateDoc, doc, getDocs, query, where, getDoc } from 'firebase/firestore';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { QuizChat } from '../../components/QuizChat';
+
+type TabType = 'learn' | 'practice' | 'quiz';
 
 export default function ChatPage() {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
@@ -15,6 +18,7 @@ export default function ChatPage() {
   const [newTopic, setNewTopic] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [editingTopic, setEditingTopic] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabType>('learn');
 
   const searchParams = useSearchParams();
   const courseId = searchParams.get('courseId');
@@ -123,6 +127,21 @@ export default function ChatPage() {
     }
   };
 
+  const TabButton = ({ tab, label }: { tab: TabType; label: string }) => (
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => setActiveTab(tab)}
+      className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+        activeTab === tab 
+          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white' 
+          : 'text-gray-400 hover:text-white'
+      }`}
+    >
+      {label}
+    </motion.button>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white p-2">
       {/* Animated background */}
@@ -192,42 +211,31 @@ export default function ChatPage() {
           </ul>
         </motion.div>
 
-        {/* Chat Sections */}
+        {/* Main Content Area */}
         <div className="flex-1 space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl border border-gray-700"
           >
-            <h2 className="text-2xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
-              Learn
-            </h2>
-            <div className="h-[calc(100vh-20rem)]">
-              {selectedTopic ? (
-                <LearningChat topic={selectedTopic} courseId={courseId!} />
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-400">
-                  Select a topic to start learning...
-                </div>
-              )}
+            {/* Tabs */}
+            <div className="flex gap-4 mb-6">
+              <TabButton tab="learn" label="Learn" />
+              <TabButton tab="practice" label="Practice" />
+              <TabButton tab="quiz" label="Quiz" />
             </div>
-          </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl border border-gray-700"
-          >
-            <h2 className="text-2xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
-              Practice
-            </h2>
-            <div className="h-[calc(100vh-20rem)]">
+            {/* Content */}
+            <div className="h-[calc(100vh-12rem)]">
               {selectedTopic ? (
-                <ProblemChat topic={selectedTopic} courseId={courseId!} />
+                <>
+                  {activeTab === 'learn' && <LearningChat topic={selectedTopic} courseId={courseId!} />}
+                  {activeTab === 'practice' && <ProblemChat topic={selectedTopic} courseId={courseId!} />}
+                  {activeTab === 'quiz' && <QuizChat topic={selectedTopic} courseId={courseId!} />}
+                </>
               ) : (
                 <div className="flex items-center justify-center h-full text-gray-400">
-                  Select a topic to start practicing...
+                  Select a topic to start {activeTab === 'learn' ? 'learning' : activeTab === 'practice' ? 'practicing' : 'taking quizzes'}...
                 </div>
               )}
             </div>
