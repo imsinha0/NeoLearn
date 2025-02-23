@@ -86,6 +86,8 @@ export function ProblemChat({ topic, courseId }: { topic: string; courseId: stri
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [lastMessageTime, setLastMessageTime] = useState<Date | null>(null);
 
   useEffect(() => {
     const loadChatHistory = async () => {
@@ -140,9 +142,24 @@ export function ProblemChat({ topic, courseId }: { topic: string; courseId: stri
     await addDoc(courseRef, { ...courseData, problemChat: chatHistory });
   };
 
+  // Update cooldown timer
+  useEffect(() => {
+    if (!lastMessageTime || cooldown <= 0) return;
+
+    const timer = setInterval(() => {
+      const secondsLeft = Math.max(
+        0,
+        60 - Math.floor((new Date().getTime() - lastMessageTime.getTime()) / 1000)
+      );
+      setCooldown(secondsLeft);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [lastMessageTime, cooldown]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading || cooldown > 0) return;
 
     const userMessage: Message = { 
       role: 'user', 
@@ -180,6 +197,10 @@ export function ProblemChat({ topic, courseId }: { topic: string; courseId: stri
       
       setMessages(prev => [...prev, assistantMessage]);
       await saveMessage(assistantMessage);
+      
+      // Start cooldown after receiving response
+      setLastMessageTime(new Date());
+      setCooldown(60);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -253,6 +274,14 @@ export function ProblemChat({ topic, courseId }: { topic: string; courseId: stri
           </button>
         </div>
       </div>
+
+      {/* Add cooldown indicator */}
+      {cooldown > 0 && (
+        <div className="mb-4 text-center py-2 bg-gray-800 rounded">
+          Next problem available in {cooldown} seconds
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto space-y-4">
         {messages.map((message, index) => (
           <div
@@ -282,12 +311,13 @@ export function ProblemChat({ topic, courseId }: { topic: string; courseId: stri
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask for practice problems..."
-          className="flex-1 px-4 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+          placeholder={cooldown > 0 ? `Wait ${cooldown}s for next problem...` : "Ask for practice problems..."}
+          disabled={cooldown > 0 || isLoading}
+          className="flex-1 px-4 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:opacity-50"
         />
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={isLoading || cooldown > 0}
           className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50"
         >
           Send
