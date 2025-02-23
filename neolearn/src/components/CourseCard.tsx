@@ -32,6 +32,7 @@ export function CourseCard({ course, onDelete, onEdit, onClick }: CourseCardProp
     >
       <h3 className="text-xl font-bold mb-2">{course.title}</h3>
       <p className="text-gray-300 mb-4">{course.description}</p>
+
       <div className="flex justify-end space-x-2">
         <button
           onClick={(e) => {
