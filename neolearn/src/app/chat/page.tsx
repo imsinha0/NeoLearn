@@ -3,9 +3,8 @@
 import { LearningChat } from '../../components/LearningChat';
 import { ProblemChat } from '../../components/ProblemChat';
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { auth, db } from '@/firebase'; // Import your Firestore instance
-import { collection, addDoc, deleteDoc, updateDoc, doc, getDocs, query, where, getDoc } from 'firebase/firestore';
+import { collection, updateDoc, doc, getDocs, query, where, getDoc } from 'firebase/firestore';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { QuizChat } from '../../components/QuizChat';

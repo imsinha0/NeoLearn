@@ -81,13 +81,12 @@ export default function CoursesPage() {
         setCourses(courses.map(c => c.id === course.id ? course : c));
       } else {
 
-        let prompt = "I will give you information about a course."
-        prompt = prompt + "Please give me 8 topics about the course separated by a comma."
-        prompt = prompt + "The title of the course is: " + course.title
-        prompt = prompt + "The subject of the course is: " + course.subject
-        prompt = prompt + "The description of the course is: " + course.description
-        prompt = prompt + "The textbook of the course are: " + course.textbook
-        prompt = prompt + "The syllabus of the course is: " + course.syllabus
+        let prompt = "Based on the following course information, please provide 8 relevant topics separated by commas and no other words:\n";
+        prompt += `Course Title: ${course.title}\n`;
+        prompt += `Subject: ${course.subject}\n`;
+        prompt += `Description: ${course.description}\n`;
+        prompt += `Textbook: ${course.textbook}\n`;
+        prompt += `Syllabus: ${course.syllabus}\n`;
         
         const result = await model.generateContent(prompt);
         const response = result.response;

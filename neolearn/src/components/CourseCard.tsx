@@ -21,9 +21,6 @@ export function CourseCard({ course, onDelete, onEdit, onClick }: CourseCardProp
     }
   };
 
-  const handleClick = () => {
-    router.push(`/chat?courseId=${course.id}`);
-  };
 
   return (
     <div 

@@ -26,8 +26,7 @@ export default function LoginPage() {
         await signInWithEmailAndPassword(auth, email, password);
       }
       router.push('/courses');
-    } catch (error: any) {
-      setError(error.message);
+    } catch{
     } finally {
       setIsLoading(false);
     }
