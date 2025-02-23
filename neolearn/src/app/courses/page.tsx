@@ -203,7 +203,7 @@ export default function CoursesPage() {
             className="text-center py-20"
           >
             <p className="text-gray-400 text-xl">
-              No courses yet. Click "Add Course" to get started!
+              No courses yet. Click &quot;Add Course&quot; to get started!
             </p>
           </motion.div>
         )}

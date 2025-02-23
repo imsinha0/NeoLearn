@@ -2,13 +2,30 @@
 
 import { useState, useEffect } from 'react';
 import { auth, db } from '@/firebase';
-import { collection, addDoc, query, where, getDocs, deleteDoc, orderBy } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
 }
+
+const formatMessage = (content: string) => {
+  return content.split('**').map((part, index) => {
+    if (index % 2 === 1) { // This is inside ** **
+      const words = part.split(' ');
+      const firstWord = words[0];
+      const restOfContent = words.slice(1).join(' ');
+      return (
+        <div key={index} className="mt-2">
+          <span className="font-bold">{firstWord}</span>
+          {restOfContent && ' ' + restOfContent}
+        </div>
+      );
+    }
+    return <span key={index}>{part}</span>;
+  });
+};
 
 export function LearningChat({ topic, courseId }: { topic: string; courseId: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -207,7 +224,7 @@ export function LearningChat({ topic, courseId }: { topic: string; courseId: str
                 message.role === 'user' ? 'bg-blue-600' : 'bg-gray-700'
               }`}
             >
-              {message.content}
+              {formatMessage(message.content)}
             </div>
           </div>
         ))}

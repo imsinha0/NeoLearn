@@ -3,12 +3,84 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from '@/firebase';
 import { collection, addDoc, query, where, getDocs, deleteDoc } from 'firebase/firestore';
+import Script from 'next/script';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
 }
+
+// Add MathJax script and config
+const MathJaxScript = () => (
+  <>
+    <Script src="https://polyfill.io/v3/polyfill.min.js?features=es6" strategy="beforeInteractive" />
+    <Script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" strategy="beforeInteractive" />
+  </>
+);
+
+const formatMessage = (content: string) => {
+  // Split by code blocks first
+  const parts = content.split('```');
+  
+  return parts.map((part, index) => {
+    // Even indices are normal text, odd indices are code blocks
+    if (index % 2 === 1) {
+      // This is a code block
+      return (
+        <pre key={index} className="bg-gray-900 p-3 rounded-lg mt-2 overflow-x-auto">
+          <code className="text-sm font-mono text-gray-200">
+            {part.trim()}
+          </code>
+        </pre>
+      );
+    }
+
+    // Handle normal text with ** markers and other formatting
+    return part.split('**').map((subPart, subIndex) => {
+      if (subIndex % 2 === 1) { // This is inside ** **
+        const words = subPart.split(' ');
+        const firstWord = words[0];
+        const restOfContent = words.slice(1).join(' ');
+        return (
+          <div key={`${index}-${subIndex}`} className="mt-2">
+            <span className="font-bold">{firstWord}</span>
+            {restOfContent && ' ' + restOfContent}
+          </div>
+        );
+      }
+
+      // Handle HTML tags
+      if (subPart.includes('<') && subPart.includes('>')) {
+        return (
+          <div key={`${index}-${subIndex}`} 
+            className="mt-2 p-2 bg-gray-800 rounded"
+            dangerouslySetInnerHTML={{ __html: subPart }}
+          />
+        );
+      }
+
+      // Handle LaTeX (assuming it's wrapped in $$ $$)
+      if (subPart.includes('$$')) {
+        const latexParts = subPart.split('$$');
+        return latexParts.map((latex, latexIndex) => {
+          if (latexIndex % 2 === 1) { // This is LaTeX
+            return (
+              <div key={`${index}-${subIndex}-${latexIndex}`} 
+                className="px-2 py-1 my-2 bg-gray-800 rounded overflow-x-auto"
+              >
+                {`\\[${latex.trim()}\\]`}
+              </div>
+            );
+          }
+          return <span key={`${index}-${subIndex}-${latexIndex}`}>{latex}</span>;
+        });
+      }
+
+      return <span key={`${index}-${subIndex}`}>{subPart}</span>;
+    });
+  });
+};
 
 export function ProblemChat({ topic, courseId }: { topic: string; courseId: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -162,6 +234,7 @@ export function ProblemChat({ topic, courseId }: { topic: string; courseId: stri
 
   return (
     <div className="flex flex-col h-full">
+      <MathJaxScript />
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-bold">Practice: {topic}</h3>
         <div className="flex space-x-2">
@@ -191,7 +264,7 @@ export function ProblemChat({ topic, courseId }: { topic: string; courseId: stri
                 message.role === 'user' ? 'bg-blue-600' : 'bg-gray-700'
               }`}
             >
-              {message.content}
+              {formatMessage(message.content)}
             </div>
           </div>
         ))}
