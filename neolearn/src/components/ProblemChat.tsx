@@ -115,16 +115,70 @@ export function ProblemChat({ topic, courseId }: { topic: string; courseId: stri
     }
   };
 
+  const handleFullAnswer = async () => {
+    const prompt = `Please provide the complete solution and explanation for the current problem about ${topic}`;
+    
+    const userMessage: Message = { 
+      role: 'user', 
+      content: prompt,
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    await saveMessage(userMessage);
+    setIsLoading(true);
+
+    try {
+      const context = messages
+        .map(m => `${m.role}: ${m.content}`)
+        .join('\n');
+
+      const response = await fetch('/api/learn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: prompt,
+          topic,
+          mode: 'problem',
+          context
+        }),
+      });
+
+      const data = await response.json();
+      const assistantMessage: Message = { 
+        role: 'assistant', 
+        content: data.response,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, assistantMessage]);
+      await saveMessage(assistantMessage);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
-      <div className="flex justify-between mb-4">
+      <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-bold">Practice: {topic}</h3>
-        <button
-          onClick={clearHistory}
-          className="px-3 py-1 bg-red-600 rounded hover:bg-red-700"
-        >
-          Clear History
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={handleFullAnswer}
+            disabled={isLoading || messages.length === 0}
+            className="px-3 py-1 bg-green-600 rounded hover:bg-green-700 disabled:opacity-50"
+          >
+            Give Full Answer
+          </button>
+          <button
+            onClick={clearHistory}
+            className="px-3 py-1 bg-red-600 rounded hover:bg-red-700"
+          >
+            Clear History
+          </button>
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto space-y-4">
         {messages.map((message, index) => (

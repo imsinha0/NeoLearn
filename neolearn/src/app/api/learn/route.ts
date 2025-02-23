@@ -7,8 +7,8 @@ export async function POST(request: Request) {
 
     // Create prompt based on mode and include context
     const prompt = mode === 'learn' 
-      ? `You are a teacher. Previous conversation:\n${context}\n\nExplain ${topic} concepts related to: ${message}`
-      : `You are a teacher. Previous conversation:\n${context}\n\nCreate or solve problems about ${topic} related to: ${message}. For solving problems, don't give the whole answer just give hints to maximise learning.`
+      ? `You are a teacher. Previous conversation:\n${context}\n\nExplain ${topic} concepts related to: ${message}. Limit your response 250 words.`
+      : `You are a teacher. Previous conversation:\n${context}\n\nCreate or solve problems about ${topic} related to: ${message}. For solving problems, don't give the whole answer just give hints to maximize learning. Limit your response 250 words.`
 
     // Generate response using Firebase's Vertex AI model
     const result = await model.generateContent({

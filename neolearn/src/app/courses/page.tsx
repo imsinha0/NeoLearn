@@ -7,6 +7,7 @@ import { CourseCard } from '../../components/CourseCard';
 import { CourseDialog } from '../../components/CourseDialog';
 import type { Course } from '../../types/Course';
 import { collection, addDoc, deleteDoc, updateDoc, doc, getDocs, query, where } from 'firebase/firestore';
+import { motion } from 'framer-motion';
 
 export default function CoursesPage() {
   const router = useRouter();
@@ -14,6 +15,21 @@ export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | undefined>();
+  
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
   
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -36,9 +52,22 @@ export default function CoursesPage() {
   }, [router]);
 
   if (loading) {
-    return <div className="min-h-screen bg-gray-900 text-white p-8 flex items-center justify-center">
-      Loading...
-    </div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white p-8 flex items-center justify-center">
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            rotate: [0, 360, 0]
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
+        />
+      </div>
+    );
   }
 
   const handleSaveCourse = async (course: Course) => {
@@ -109,29 +138,75 @@ export default function CoursesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">My Courses</h1>
-          <button
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white p-8">
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            rotate: [0, 90, 0],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+          className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full blur-3xl"
+        />
+      </div>
+
+      <div className="max-w-6xl mx-auto relative">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex justify-between items-center mb-12"
+        >
+          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
+            My Courses
+          </h1>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setIsDialogOpen(true)}
-            className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700"
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg hover:shadow-lg hover:shadow-blue-500/20 transition-all"
           >
             Add Course
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
           {courses.map(course => (
-            <CourseCard
+            <motion.div
               key={course.id}
-              course={course}
-              onDelete={handleDeleteCourse}
-              onEdit={handleEditCourse}
-              onClick={handleCourseClick}
-            />
+              variants={itemVariants}
+              whileHover={{ y: -5 }}
+              className="backdrop-blur-sm"
+            >
+              <CourseCard
+                course={course}
+                onDelete={handleDeleteCourse}
+                onEdit={handleEditCourse}
+                onClick={handleCourseClick}
+              />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
+
+        {courses.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-20"
+          >
+            <p className="text-gray-400 text-xl">
+              No courses yet. Click "Add Course" to get started!
+            </p>
+          </motion.div>
+        )}
 
         <CourseDialog
           isOpen={isDialogOpen}
